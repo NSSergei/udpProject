@@ -2,103 +2,153 @@ package service;
 
 import command.*;
 
-import exception.ValidationException;
+import dto.ResponseData;
 import model.StudyGroup;
+import model.User;
 import repository.StudyGroupRepository;
-import request.RequestData;
-import storage.XmlStorage;
+import repository.UserRepository;
+import dto.RequestData;
+
+import java.io.FileNotFoundException;
+import java.sql.SQLException;
 
 public class CommandService {
     private final StudyGroupRepository repository;
-    private final XmlStorage xml;
+    private final UserRepository userRepository;
 
     public CommandService(StudyGroupRepository repository,
-                          XmlStorage xml) {
+                          UserRepository userRepository) {
         this.repository = repository;
-        this.xml = xml;
+        this.userRepository = userRepository;
     }
 
-    public String run(RequestData requestData) {
+    public synchronized ResponseData run(RequestData requestData) throws SQLException, FileNotFoundException {
+
+        if (requestData == null || requestData.getCommand() == null || requestData.getCommand().isBlank()) {
+            throw new exception.ValidationException("Command is required");
+        }
+
         String command = requestData.getCommand();
-        String result = "";
+        if (!command.equals("login") && !command.equals("register")
+                && (requestData.getUserId() == null || requestData.getUserId() <= 0)) {
+            throw new exception.ValidationException("A valid user ID is required");
+        }
 
         switch (command) {
+
             case "info":
-                 System.out.println("INFO 1");
-                 Info info = new Info(repository);
-                 System.out.println("INFO 2");
+                 Info info = new Info(repository, requestData.getUserId());
                  info.execute();
-                 System.out.println("INFO 3");
-                 System.out.println("INFO 4: " + result);
-                 result = info.getInfo();
-                 break;
+                 return new ResponseData(true,
+                         info.getInfo(),
+                         null);
             case "show":
-                 Show show = new Show(repository);
+                 Show show = new Show(repository, requestData.getUserId());
                  show.execute();
-                 result = show.getCollectionResult();
-                 break;
+                 return new ResponseData(true,
+                         show.getCollectionResult(),
+                         null);
+
             case "add":
                  StudyGroup studyGroup = requestData.getStudyGroup();
-                 new Add(repository, studyGroup).execute();
-                 result = "Объект добавлен";
-                 break;
+                 new Add(repository, studyGroup, requestData.getUserId()).execute();
+                 return new ResponseData(true,
+                         "Объект добавлен",
+                         requestData.getUserId());
+
             case "update":
                  StudyGroup studyGroup1 = requestData.getStudyGroup();
                  long id = requestData.getId();
-                 new Update(repository,id,studyGroup1).execute();
-                 result = "Объект обнавлен";
-                 break;
+                 new Update(repository,id,studyGroup1,requestData.getUserId()).execute();
+                 return new ResponseData(true,
+                         "Объект обнавлен",
+                         null);
+
             case "remove_by_id":
                  long removeId = requestData.getId();
-                 new Remove(repository, removeId).execute();
-                 result = "Объект по id: " + removeId + " удален";
-                 break;
+                 new Remove(repository, removeId, requestData.getUserId()).execute();
+                 return new ResponseData(true,
+                         "Объект по id: " + removeId + " удален",
+                         null);
+
             case "clear":
-                new Clear(repository).execute();
-                result = "Коллекция очищена";
-                break;
-            /*case "save":
-                new Save(xml,repository).execute();
-                break;*/
+                new Clear(repository, requestData.getUserId()).execute();
+                return new ResponseData(true,
+                        "Коллекция очищена",
+                        null);
+
             case "remove_first":
-                new RemoveFirst(repository).execute();
-                result = "первый объект удален";
-                break;
+                new RemoveFirst(repository, requestData.getUserId()).execute();
+                return new ResponseData(true,
+                        "первый объект удален",
+                        null);
+
             case "head":
-                Head head = new Head(repository);
+                Head head = new Head(repository, requestData.getUserId());
                 head.execute();
-                result = head.getHead();
-                break;
+                return new ResponseData(true,
+                        head.getHead(),
+                        null);
+
             case "remove_greater":
                 long greaterId = requestData.getId();
-                new RemoveGreater(repository, greaterId).execute();
-                result = "Все элементы, превышающие заданный удалены";
-                break;
+                new RemoveGreater(repository, greaterId, requestData.getUserId()).execute();
+                return new ResponseData(true,
+                        "Все элементы, превышающие заданный удалены",
+                        null);
+
             case "average_of_average_mark":
-                AverageOfAverageMark average = new AverageOfAverageMark(repository);
+                AverageOfAverageMark average = new AverageOfAverageMark(repository, requestData.getUserId());
                 average.execute();
-                //result заменить на ResponseData после тестирования
-                result = average.getAverageResult();
-                break;
+                return new ResponseData(true,
+                        average.getAverageResult(),
+                        null);
+
             case "filter_contains_name":
                 String name = requestData.getName();
-                FilterContainsName filter = new FilterContainsName(repository, name);
+                FilterContainsName filter = new FilterContainsName(repository, name, requestData.getUserId());
                 filter.execute();
-                result = filter.getResult();
-                break;
+                return new ResponseData(true,
+                        filter.getResult(),
+                        null);
+
             case "filter_greater_than_average_mark":
                 double averageMark = requestData.getAverage();
                 FilterGreaterThanAverageMark filterGreaterThanAverageMark =
-                        new FilterGreaterThanAverageMark(repository,averageMark);
+                        new FilterGreaterThanAverageMark(repository,averageMark, requestData.getUserId());
                 filterGreaterThanAverageMark.execute();
-                result = filterGreaterThanAverageMark.getResult();
-                break;
-            default:
-                result = "Метод не найден";
-                break;
-            }
+                return new ResponseData(true,
+                        filterGreaterThanAverageMark.getResult(),
+                        null);
 
-        return result;
+            case "register":
+                if (requestData.getUser() == null) {
+                    throw new exception.ValidationException("User credentials are required");
+                }
+                User user = new User(requestData.getUser().getLogin(),
+                        requestData.getUser().getPasswordHash());
+                Registrate registrate = new Registrate(userRepository,user);
+                registrate.execute();
+
+                return new ResponseData(true,
+                        "User зарегистрирован",
+                        null);
+
+            case "login":
+                if (requestData.getUser() == null) {
+                    throw new exception.ValidationException("User credentials are required");
+                }
+                User loginUser = new User(requestData.getUser().getLogin(), requestData.getUser().getPasswordHash());
+                Login login = new Login(userRepository, loginUser);
+                login.execute();
+                return new ResponseData(true,
+                        login.getResultId().toString(),
+                        login.getResultId());
+            default:
+                return new ResponseData(false,
+                        "Unknown command: " + command,
+                        null);
+            }
     }
 }
 

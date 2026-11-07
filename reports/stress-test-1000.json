@@ -1,0 +1,19 @@
+{
+  "host": "127.0.0.1",
+  "port": 12346,
+  "requests": 1000,
+  "concurrency": 32,
+  "duration_seconds": 0.682,
+  "throughput_requests_per_second": 1466.49,
+  "successes": 1000,
+  "errors": 0,
+  "error_rate_percent": 0.0,
+  "latency_ms": {
+    "mean": 21.4,
+    "p50": 17.17,
+    "p95": 29.47,
+    "p99": 145.14,
+    "max": 159.91
+  },
+  "sample_errors": []
+}

@@ -4,7 +4,6 @@ import enums.FormOfEducation;
 import exception.ValidationException;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 @JacksonXmlRootElement(localName="StudyGroup")
 public class StudyGroup implements Comparable<StudyGroup> {
@@ -22,6 +21,7 @@ public class StudyGroup implements Comparable<StudyGroup> {
     private FormOfEducation formOfEducation; //Поле не может быть null
     //private final Person groupAdmin; //Поле не может быть null
     private  Person groupAdmin;
+    private  User user;
 
     public StudyGroup(String name, Coordinates coordinates,
                       LocalDateTime creationDate, long studentsCount,
@@ -86,6 +86,7 @@ public class StudyGroup implements Comparable<StudyGroup> {
     public FormOfEducation getFormOfEducation() {
         return formOfEducation;
     }
+
     public Person getGroupAdmin() {
         return groupAdmin;
     }
@@ -129,34 +130,49 @@ public class StudyGroup implements Comparable<StudyGroup> {
     }
 
     public static boolean validateGroup(StudyGroup studyGroup) {
+        if (studyGroup == null) {
+            throw new ValidationException("Study group is required");
+        }
 
-        if (studyGroup.getName() == null || (studyGroup.getName().isEmpty())) {
-            throw new ValidationException("Ошибка имени");
+        if (studyGroup.getName() == null || studyGroup.getName().isBlank()) {
+            throw new ValidationException("Name must not be blank");
+        }
+
+        if (studyGroup.getCoordinates() == null) {
+            throw new ValidationException("Coordinates are required");
         }
 
         if (!Coordinates.validateCoordinate(studyGroup.getCoordinates().getX(),
                 studyGroup.getCoordinates().getY())) {
-            throw new ValidationException("Ошибка Осей");
+            throw new ValidationException("Invalid coordinates");
         }
 
         if (studyGroup.getCreationDate() == null) {
-            throw new ValidationException("CreationDate не может быть null");
+            throw new ValidationException("Creation date is required");
         }
 
-        if (studyGroup.getTransferredStudents() < 1) {
-            throw new ValidationException("TransferredStudents не может быть <= 0");
+        if (studyGroup.getStudentsCount() <= 0) {
+            throw new ValidationException("Students count must be positive");
         }
 
-        if (studyGroup.getAverageMark() < 1) {
-            throw new ValidationException("AverageMark не может быть <= 0");
+        if (studyGroup.getTransferredStudents() <= 0) {
+            throw new ValidationException("Transferred students must be positive");
+        }
+
+        if (!Double.isFinite(studyGroup.getAverageMark()) || studyGroup.getAverageMark() <= 0) {
+            throw new ValidationException("Average mark must be a finite positive number");
+        }
+
+        if (studyGroup.getFormOfEducation() == null) {
+            throw new ValidationException("Form of education is required");
         }
 
         if (studyGroup.getGroupAdmin() == null) {
-            throw new ValidationException("AGroupAdmin не может быть null");
+            throw new ValidationException("Group administrator is required");
         }
 
         if (!Person.validatePerson(studyGroup.getGroupAdmin())) {
-            throw new ValidationException("AGroupAdmin не соответствует требованиям");
+            throw new ValidationException("Invalid group administrator");
         }
 
         return true;

@@ -1,0 +1,16 @@
+services:
+  pg:
+    image: postgres:16
+    container_name: pg
+    environment:
+      POSTGRES_DB: ${DB_NAME:-studs}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+    name: postgres_data

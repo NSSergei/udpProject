@@ -1,4 +1,4 @@
-package command;
+/*package command;
 
 import repository.StudyGroupRepository;
 import storage.XmlStorage;
@@ -25,4 +25,4 @@ public class Save implements Command {
             System.out.println("ошибка сохранения " + e.getMessage());
         }
     }
-}
+}*/

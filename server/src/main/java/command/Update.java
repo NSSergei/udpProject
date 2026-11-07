@@ -9,15 +9,17 @@ public class Update implements Command {
     private final StudyGroupRepository studyGroupRepository;
     private final StudyGroup studyGroup;
     private final long id;
+    private final Long userId;
 
-    public Update(StudyGroupRepository studyGroupRepository, long id, StudyGroup studyGroup) {
+    public Update(StudyGroupRepository studyGroupRepository, long id, StudyGroup studyGroup, Long userId) {
         this.studyGroupRepository = studyGroupRepository;
         this.studyGroup = studyGroup;
         this.id = id;
+        this.userId = userId;
     }
 
     @Override
     public void execute() {
-        studyGroupRepository.updateStudyGroup(id, studyGroup);
+        studyGroupRepository.updateStudyGroup(id, studyGroup, userId);
     }
 }

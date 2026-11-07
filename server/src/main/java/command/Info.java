@@ -5,16 +5,19 @@ import repository.StudyGroupRepository;
 public class Info implements Command {
     private final StudyGroupRepository studyGroupRepository;
     private String info;
-    public Info(StudyGroupRepository studyGroupRepository) {
+    private final Long userId;
+    public Info(StudyGroupRepository studyGroupRepository,
+                Long userId) {
         this.studyGroupRepository = studyGroupRepository;
+        this.userId = userId;
     }
 
 
     @Override
     public void execute() {
-        info = "Тип коллекции " + studyGroupRepository.getCollection().getClass().getSimpleName() +
+        info = "Тип хранилища: PostgreSQL " +
                 " Дата создания " +   studyGroupRepository.getInitializationDate() +
-                " Размер коллекции : " + studyGroupRepository.getCollection().size();
+                " Размер коллекции : " + studyGroupRepository.showInfo(userId);
     }
 
     public String getInfo() {

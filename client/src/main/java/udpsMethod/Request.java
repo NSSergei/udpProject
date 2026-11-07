@@ -3,7 +3,8 @@ package udpsMethod;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import request.RequestData;
+import dto.RequestData;
+import dto.ResponseData;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -14,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 
 
 public class Request {
+    private static final int RESPONSE_TIMEOUT_MILLIS = 2_000;
     private final DatagramSocket socket;
     private final InetAddress inetAddress;
     private final int serverPort;
@@ -24,6 +26,11 @@ public class Request {
         this.inetAddress = inetAddress;
         this.serverPort = serverPort;
         this.xmlMapper = xmlMapper;
+        try {
+            this.socket.setSoTimeout(RESPONSE_TIMEOUT_MILLIS);
+        } catch (java.net.SocketException e) {
+            throw new IllegalStateException("Unable to configure UDP timeout", e);
+        }
     }
 
 
@@ -37,14 +44,15 @@ public class Request {
         xmlMapper = new XmlMapper();
         xmlMapper.registerModule(new JavaTimeModule());
         xmlMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        socket.setSoTimeout(RESPONSE_TIMEOUT_MILLIS);
     }
 
 
-    public void run(RequestData requestData) throws IOException {
+    public ResponseData run(RequestData requestData) throws IOException {
 
         String xml = xmlMapper.writeValueAsString(requestData);
-        System.out.println("XML:");
-        System.out.println(xml);
+        /*System.out.println("XML:");
+        System.out.println(xml);*/
 
         byte[] data = xml.getBytes(StandardCharsets.UTF_8);
 
@@ -56,7 +64,7 @@ public class Request {
                     serverPort
             );
 
-            socket.setSoTimeout(300);
+            //socket.setSoTimeout(300);
 
             //можно реализовать try / catch для reTry
             socket.send(packet);
@@ -69,23 +77,25 @@ public class Request {
             );
 
             socket.receive(response);
+            if (!response.getAddress().equals(inetAddress) || response.getPort() != serverPort) {
+                throw new IOException("Received response from an unexpected endpoint");
+            }
             //------
-
-            String result = new String(
+            String xmlResult = new String(
                     response.getData(),
                     0,
                     response.getLength(),
                     StandardCharsets.UTF_8
             );
 
-            System.out.println(result);
+            ResponseData responseData = xmlMapper.readValue(xmlResult, ResponseData.class);
+
+            return responseData;
+
         } catch (SocketTimeoutException e) {
-            System.out.println("Time out: server out of response");
-        } catch (IOException e) {
-            System.out.println("Error while handler data by UDP");
+            throw new IOException(
+                    "Time out: server out of response",
+                    e);
         }
-    }
-    public void close() {
-        socket.close();
     }
 }

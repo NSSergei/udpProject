@@ -38,8 +38,8 @@ public class Coordinates {
             throw new ValidationException("Ось X не может быть меньше -176");
         }
 
-        if (y == null || y > 743) {
-            throw new ValidationException("Ось Y не может быть больше 743");
+        if (y == null || !Double.isFinite(y) || y > 743) {
+            throw new ValidationException("Y must be finite and at most 743");
 
         }
 

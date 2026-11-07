@@ -1,5 +1,8 @@
 package command;
 
+import dto.RequestData;
+import method.StudyGroupCreator;
+import model.StudyGroup;
 import service.ClientCommandService;
 
 import java.io.File;
@@ -20,15 +23,20 @@ public class ExecuteScript implements Command {
 
     @Override
     public void execute() throws IOException {
+        System.out.println("Рабочая директория: " + System.getProperty("user.dir"));
+        System.out.println("Путь к файлу: " + file.getAbsolutePath());
+        System.out.println("Файл существует: " + file.exists());
+
         Scanner scanner = new Scanner(file);
-        List<String> commands = new ArrayList<>();
 
         while (scanner.hasNextLine()) {
             String command = scanner.nextLine();
-            commands.add(command);
-        }
-        for(int i = 0; i < commands.size(); i++) {
-            clientCommandService.run(commands.get(i));
+            if (command.equals("add")) {
+                StudyGroup studyGroup = new StudyGroupCreator().groupCreateFile(scanner);
+                clientCommandService.sendAndPrint(new RequestData("add",studyGroup, clientCommandService.getCurrentUserId()));
+            } else {
+                clientCommandService.run(command);
+            }
         }
     }
 }

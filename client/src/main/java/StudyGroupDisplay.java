@@ -1,4 +1,5 @@
 import method.StudyGroupCreator;
+import method.UserCreator;
 import service.ClientCommandService;
 import udpsMethod.Request;
 
@@ -12,6 +13,8 @@ public class StudyGroupDisplay {
         StudyGroupCreator studyGroupCreator =
                 new StudyGroupCreator();
 
+        UserCreator user = new UserCreator(scanner);
+
         Request request =
                 new Request();
 
@@ -19,15 +22,28 @@ public class StudyGroupDisplay {
                 new ClientCommandService(
                         scanner,
                         studyGroupCreator,
-                        request
+                        request,
+                        user
                 );
 
-        while (true) {
+        while (scanner.hasNextLine()) {
+            System.out.println("""
+            Зарегистрируйтесь, а затем войдите в учетную запись.
+            Если учетная запись уже существует — просто войдите.
+            
+            Команда для регистрации: register
+            Команда для входа: login
+            """);
+            String auth = scanner.nextLine();
+            if (auth.trim().equalsIgnoreCase("exit")) {
+                break;
+            }
+                commandService.run(auth);
+            while (commandService.isFlag() && scanner.hasNextLine()) {
                 System.out.println("введите команду");
                 String input = scanner.nextLine();
-
                 commandService.run(input);
             }
-
+        }
     }
 }

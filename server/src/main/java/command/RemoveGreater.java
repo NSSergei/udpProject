@@ -6,16 +6,19 @@ import repository.StudyGroupRepository;
 
 public class RemoveGreater implements Command {
     private final StudyGroupRepository studyGroupRepository;
-    private long element;
+    private final long element;
+    private final Long userId;
 
     public RemoveGreater(StudyGroupRepository studyGroupRepository,
-                         long element) {
+                         long element,
+                         Long userId) {
         this.studyGroupRepository = studyGroupRepository;
         this.element = element;
+        this.userId = userId;
     }
 
     @Override
     public void execute() {
-        studyGroupRepository.removeGreater(element);
+        studyGroupRepository.removeGreater(element, userId);
     }
 }

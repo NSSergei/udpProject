@@ -1,0 +1,10 @@
+{
+  "requests": 5000,
+  "concurrency": 128,
+  "durationSeconds": 2.856,
+  "serverCpuSeconds": 3.031,
+  "averageCpuPercentOf16LogicalProcessors": 6.63,
+  "sampledPeakWorkingSetMiB": 381.38,
+  "finalWorkingSetMiB": 381.38,
+  "exitCode": 0
+}

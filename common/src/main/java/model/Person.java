@@ -75,12 +75,24 @@ public class Person {
     }
 
     public static boolean validatePerson(Person person) {
-        if (person.getName() == null || person.getName().isEmpty()) {
-            throw new ValidationException("Ошибка имени");
+        if (person == null) {
+            throw new ValidationException("Person is required");
+        }
+
+        if (person.getName() == null || person.getName().isBlank()) {
+            throw new ValidationException("Person name must not be blank");
         }
 
         if (person.getHeight() == null || person.getHeight() <= 0) {
             throw new ValidationException("Ошибка роста");
+        }
+
+        if (person.getLocation() != null) {
+            Location location = person.getLocation();
+            if (location.getX() == null || location.getY() == null
+                    || !Float.isFinite(location.getX()) || !Float.isFinite(location.getZ())) {
+                throw new ValidationException("Location coordinates must be finite and present");
+            }
         }
 
         return true;
