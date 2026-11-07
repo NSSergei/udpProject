@@ -57,6 +57,9 @@ public class CommandService {
                          requestData.getUserId());
 
             case "update":
+                 if (requestData.getId() == null || requestData.getId() <= 0) {
+                     throw new exception.ValidationException("A valid group ID is required");
+                 }
                  StudyGroup studyGroup1 = requestData.getStudyGroup();
                  long id = requestData.getId();
                  new Update(repository,id,studyGroup1,requestData.getUserId()).execute();

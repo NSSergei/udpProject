@@ -39,7 +39,7 @@ public class ClientCommandService {
             return;
         }
 
-        String[] parts = input.trim().split(" ");
+        String[] parts = input.trim().split("\\s+");
 
         String command = parts[0];
 
@@ -109,7 +109,7 @@ public class ClientCommandService {
                     break;
                 }
                 long greaterId = Long.parseLong(parts[1]) ;
-                sendAndPrint(new RequestData(command, greaterId));
+                sendAndPrint(new RequestData(command, greaterId, currentUserId));
                 break;
             case "average_of_average_mark":
                 sendAndPrint(new RequestData(command, currentUserId));

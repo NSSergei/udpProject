@@ -1,5 +1,6 @@
 package repository;
 import model.StudyGroup;
+import model.Location;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -67,48 +68,48 @@ public class StudyGroupRepository {
 
             try (PreparedStatement pr = connection.prepareStatement(showCollection)) {
                 pr.setLong(1, userId);
-                ResultSet resultSet = pr.executeQuery();
+                try (ResultSet resultSet = pr.executeQuery()) {
+                    while (resultSet.next()) {
+                        result.append("id: ")
+                                .append(resultSet.getLong("id"))
+                                .append("\n");
 
-                while (resultSet.next()) {
-                    result.append("id: ")
-                            .append(resultSet.getLong("id"))
-                            .append("\n");
+                        result.append("name: ")
+                                .append(resultSet.getString("name"))
+                                .append("\n");
 
-                    result.append("name: ")
-                            .append(resultSet.getString("name"))
-                            .append("\n");
+                        result.append("coordinates_id: ")
+                                .append(resultSet.getLong("coordinates_id"))
+                                .append("\n");
 
-                    result.append("coordinates_id: ")
-                            .append(resultSet.getLong("coordinates_id"))
-                            .append("\n");
+                        result.append("creationDate: ")
+                                .append(resultSet.getTimestamp("creationDate"))
+                                .append("\n");
 
-                    result.append("creationDate: ")
-                            .append(resultSet.getTimestamp("creationDate"))
-                            .append("\n");
+                        result.append("studentsCount: ")
+                                .append(resultSet.getLong("studentsCount"))
+                                .append("\n");
 
-                    result.append("studentsCount: ")
-                            .append(resultSet.getLong("studentsCount"))
-                            .append("\n");
+                        result.append("transferredStudents: ")
+                                .append(resultSet.getInt("transferredStudents"))
+                                .append("\n");
 
-                    result.append("transferredStudents: ")
-                            .append(resultSet.getInt("transferredStudents"))
-                            .append("\n");
+                        result.append("averageMark: ")
+                                .append(resultSet.getFloat("averageMark"))
+                                .append("\n");
 
-                    result.append("averageMark: ")
-                            .append(resultSet.getFloat("averageMark"))
-                            .append("\n");
+                        result.append("formOfEducation: ")
+                                .append(resultSet.getString("formOfEducation"))
+                                .append("\n");
 
-                    result.append("formOfEducation: ")
-                            .append(resultSet.getString("formOfEducation"))
-                            .append("\n");
+                        result.append("person_id: ")
+                                .append(resultSet.getLong("person_id"))
+                                .append("\n");
 
-                    result.append("person_id: ")
-                            .append(resultSet.getLong("person_id"))
-                            .append("\n");
-
-                    result.append("user_id:")
-                            .append(resultSet.getLong("user_id"))
-                            .append("\n");
+                        result.append("user_id:")
+                                .append(resultSet.getLong("user_id"))
+                                .append("\n");
+                    }
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -339,9 +340,15 @@ public class StudyGroupRepository {
                         WHERE id = ?
                     """;
 
+            String sqlInsertLocation = """
+                    INSERT INTO location(x, y, z)
+                    VALUES(?, ?, ?)
+                    RETURNING id
+                    """;
+
             String sqlUpdatePerson = """
                        UPDATE person
-                       SET name = ?, height = ?, eyeColor = ?, hairColor = ?, nationality = ?
+                       SET name = ?, height = ?, eyeColor = ?, hairColor = ?, nationality = ?, location_id = ?
                        WHERE id = ?
                     """;
 
@@ -368,28 +375,60 @@ public class StudyGroupRepository {
                 throw new RuntimeException(e);
             }
 
-            try (PreparedStatement pr = connection.prepareStatement(sqlUpdateLocation)) {
-                pr.setFloat(1, studyGroup.getGroupAdmin().getLocation().getX());
-                pr.setFloat(2, studyGroup.getGroupAdmin().getLocation().getY());
-                pr.setFloat(3, studyGroup.getGroupAdmin().getLocation().getZ());
-                pr.setLong(4, locationId);
+            Location updatedLocation = studyGroup.getGroupAdmin().getLocation();
+            if (updatedLocation != null) {
+                if (locationId == 0) {
+                    try (PreparedStatement pr = connection.prepareStatement(sqlInsertLocation)) {
+                        pr.setFloat(1, updatedLocation.getX());
+                        pr.setInt(2, updatedLocation.getY());
+                        pr.setFloat(3, updatedLocation.getZ());
+                        try (ResultSet rs = pr.executeQuery()) {
+                            if (!rs.next()) {
+                                throw new SQLException("Unable to create location");
+                            }
+                            locationId = rs.getLong("id");
+                        }
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    try (PreparedStatement pr = connection.prepareStatement(sqlUpdateLocation)) {
+                        pr.setFloat(1, updatedLocation.getX());
+                        pr.setInt(2, updatedLocation.getY());
+                        pr.setFloat(3, updatedLocation.getZ());
+                        pr.setLong(4, locationId);
+                        pr.executeUpdate();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+
+            try (PreparedStatement pr = connection.prepareStatement(sqlUpdatePerson)) {
+                pr.setString(1, studyGroup.getGroupAdmin().getName());
+                pr.setInt(2, studyGroup.getGroupAdmin().getHeight());
+                pr.setString(3, studyGroup.getGroupAdmin().getEyeColor() == null ? null : studyGroup.getGroupAdmin().getEyeColor().name());
+                pr.setString(4, studyGroup.getGroupAdmin().getHairColor() == null ? null : studyGroup.getGroupAdmin().getHairColor().name());
+                pr.setString(5, studyGroup.getGroupAdmin().getNationality() == null ? null : studyGroup.getGroupAdmin().getNationality().name());
+                if (updatedLocation == null) {
+                    pr.setNull(6, Types.BIGINT);
+                } else {
+                    pr.setLong(6, locationId);
+                }
+                pr.setLong(7, personId);
 
                 pr.executeUpdate();
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
 
-            try (PreparedStatement pr = connection.prepareStatement(sqlUpdatePerson)) {
-                pr.setString(1, studyGroup.getGroupAdmin().getName());
-                pr.setInt(2, studyGroup.getGroupAdmin().getHeight());
-                pr.setString(3, studyGroup.getGroupAdmin().getEyeColor().name());
-                pr.setString(4, studyGroup.getGroupAdmin().getHairColor().name());
-                pr.setString(5, studyGroup.getGroupAdmin().getNationality().name());
-                pr.setLong(6, personId);
-
-                pr.executeUpdate();
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
+            if (updatedLocation == null && locationId != 0) {
+                try (PreparedStatement pr = connection.prepareStatement("DELETE FROM location WHERE id = ?")) {
+                    pr.setLong(1, locationId);
+                    pr.executeUpdate();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
             }
 
             try (PreparedStatement pr = connection.prepareStatement(sqlUpdateStudyGroup)) {

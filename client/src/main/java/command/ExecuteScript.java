@@ -27,15 +27,15 @@ public class ExecuteScript implements Command {
         System.out.println("Путь к файлу: " + file.getAbsolutePath());
         System.out.println("Файл существует: " + file.exists());
 
-        Scanner scanner = new Scanner(file);
-
-        while (scanner.hasNextLine()) {
-            String command = scanner.nextLine();
-            if (command.equals("add")) {
-                StudyGroup studyGroup = new StudyGroupCreator().groupCreateFile(scanner);
-                clientCommandService.sendAndPrint(new RequestData("add",studyGroup, clientCommandService.getCurrentUserId()));
-            } else {
-                clientCommandService.run(command);
+        try (Scanner scanner = new Scanner(file)) {
+            while (scanner.hasNextLine()) {
+                String command = scanner.nextLine();
+                if (command.equals("add")) {
+                    StudyGroup studyGroup = new StudyGroupCreator().groupCreateFile(scanner);
+                    clientCommandService.sendAndPrint(new RequestData("add",studyGroup, clientCommandService.getCurrentUserId()));
+                } else {
+                    clientCommandService.run(command);
+                }
             }
         }
     }

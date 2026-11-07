@@ -20,6 +20,8 @@ public class Update implements Command {
 
     @Override
     public void execute() {
-        studyGroupRepository.updateStudyGroup(id, studyGroup, userId);
+        if (StudyGroup.validateGroup(studyGroup)) {
+            studyGroupRepository.updateStudyGroup(id, studyGroup, userId);
+        }
     }
 }

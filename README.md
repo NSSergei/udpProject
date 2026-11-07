@@ -115,13 +115,24 @@ Registration requires a login of at least six characters and a password of at le
 
 ## Tests
 
-Run all module tests from the repository root:
+Run the full test suite and generate per-module JaCoCo coverage reports from the repository root:
 
 ```powershell
-mvn test
+mvn clean verify
 ```
 
-The current suite contains 11 tests covering client input parsing, group validation boundaries, authentication command behavior, duplicate-registration handling at the command layer, salted password hashing, legacy password verification, and rejection of malformed requests. Tests do not require a running PostgreSQL instance.
+The suite contains 64 tests for domain validation and DTO serialization, client command routing and script input, UDP request and response behavior, server command dispatch, repository queries and transaction handling, database schema initialization, password hashing, and legacy hash migration. Database calls are mocked, so the test suite does not need a running PostgreSQL instance.
+
+Current JaCoCo results from `mvn clean verify`:
+
+| Module | Instruction coverage | Branch coverage | Line coverage |
+| --- | ---: | ---: | ---: |
+| `common` | 96.6% | 83.9% | 96.6% |
+| `client` | 66.0% | 54.2% | 67.4% |
+| `server` | 82.8% | 71.0% | 84.1% |
+| **Overall (weighted across modules)** | **81.4%** | **70.1%** | — |
+
+Open each generated HTML report at `common/target/site/jacoco/index.html`, `client/target/site/jacoco/index.html`, or `server/target/site/jacoco/index.html`. The reports are build artifacts and are recreated by `mvn clean verify`.
 
 ## Metrics and monitoring
 
